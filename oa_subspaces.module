@@ -48,14 +48,14 @@ function oa_subspaces_form_node_form_alter(&$form, $form_state, $form_id) {
     $parent_default['#title'] = t('Parents');
     $parent_default['#description'] = t('Inherit membership from the selected parents.');
     $type = $form['#node']->type;
-    $admin_access = user_access('create ' . $type . ' content') || user_access('administer group');
+    $gid = oa_core_get_space_context();
+    $admin_access = og_user_access('node', $gid, "create $type content") || user_access('administer group');
     if (empty($form['#node']->nid)) {
-      $gid = oa_core_get_space_context();
       // If they are being granted create permission based on group permission
       // restrict the parent field to current group so don't have to deal with
       // changing values in form based on changed parent field.
       if (!$admin_access) {
-        if (!$gid || !in_array($gid, $parent_default['#options'])) {
+        if (!$gid || !in_array($gid, array_keys($parent_default['#options']))) {
           drupal_access_denied();
           die();
         }
