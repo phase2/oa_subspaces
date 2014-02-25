@@ -34,7 +34,9 @@ function oa_subspaces_form_node_form_alter(&$form, $form_state, $form_id) {
       $all = array();
       foreach ($parent_default['#options'] + $parent_admin['#options'] as $op => $value) {
         if (is_array($value)) {
-          $all += $value;
+          foreach($value as $id => $title) {
+            $all[$id] = $title . ' ' . '[' . drupal_strtolower($op) . ']';
+          }
         }
         else {
           $all[$op] = $value;
