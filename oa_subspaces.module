@@ -292,8 +292,8 @@ function oa_subspaces_views_query_alter(&$view, &$query) {
     $settings = _oa_subspaces_find_view_settings($view);
     if ($settings['og_subspaces_view_all'] && ($children = oa_subspaces_get_children_groups('node', $view->exposed_input['og_group_ref_target_id']))) {
       foreach ($query->where[1]['conditions'] as $key => $condition) {
-        // @todo - can we calculate this?
-        if ($condition['field'] == 'og_membership.gid' || $condition['field'] == 'node_field_data_field_oa_node_ref__og_membership.gid') {
+        // If the field is 'og_membership.gid' or an alias for the same column.
+        if ($condition['field'] === 'og_membership.gid' || substr($condition['field'], -19) === '__og_membership.gid') {
           $query->where[1]['conditions'][$key]['value'] = array_merge($query->where[1]['conditions'][$key]['value'], $children);
           break;
         }
