@@ -336,11 +336,20 @@ function oa_subspaces_views_query_alter(&$view, &$query) {
 
     // Add the extra groups to query, if there are any.
     if (!empty($extra_groups)) {
-      foreach ($query->where[1]['conditions'] as $key => $condition) {
-        // If the field is 'og_membership.gid' or an alias for the same column.
-        if ($condition['field'] === 'og_membership.gid' || substr($condition['field'], -19) === '__og_membership.gid') {
-          $query->where[1]['conditions'][$key]['value'] = array_merge($query->where[1]['conditions'][$key]['value'], $extra_groups);
-          break;
+      $columns = array(
+        'og_membership.gid',
+        'field_data_oa_other_spaces_ref.oa_other_spaces_ref_target_id',
+      );
+
+      // Loop over all conditions in all 'where groups'.
+      foreach (array_keys($query->where) as $where_group) {
+        foreach ($query->where[$where_group]['conditions'] as $key => $condition) {
+          // If it matches the column or an alias.
+          foreach ($columns as $column) {
+            if ($condition['field'] === $column || substr($condition['field'], -strlen($column)) === "__{$column}") {
+              $query->where[$where_group]['conditions'][$key]['value'] = array_merge($query->where[$where_group]['conditions'][$key]['value'], $extra_groups);
+            }
+          }
         }
       }
     }
