@@ -346,7 +346,8 @@ function oa_subspaces_views_query_alter(&$view, &$query) {
         foreach ($query->where[$where_group]['conditions'] as $key => $condition) {
           // If it matches the column or an alias.
           foreach ($columns as $column) {
-            if ($condition['field'] === $column || substr($condition['field'], -strlen($column)) === "__{$column}") {
+            if ($condition['field'] === $column ||
+              (is_string($condition['field']) && substr($condition['field'], -strlen($column)) === "__{$column}")) {
               $query->where[$where_group]['conditions'][$key]['value'] = array_merge($query->where[$where_group]['conditions'][$key]['value'], $extra_groups);
             }
           }
