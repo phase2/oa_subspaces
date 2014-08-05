@@ -10,6 +10,11 @@ include_once 'oa_subspaces.features.inc';
  * Name of default Parent Space field.
  */
 define('OA_PARENT_SPACE', 'oa_parent_space');
+/**
+ * Name of caches.
+ */
+define('OA_SUBSPACES_CACHE_CHILDREN', 'oa_subspaces_children');
+define('OA_SUBSPACES_CACHE_PARENTS', 'oa_subspaces_parents');
 
 /**
  * Implements hook_form_alter().
@@ -119,7 +124,7 @@ function oa_subspaces_form_node_form_validate($form, &$form_state) {
 }
 
 /**
- * Return children of Space, regardless of the inheritence field.
+ * Return children of Space, regardless of the inheritance field.
  *
  * @param $group_type
  *   The group (entity) type.
@@ -130,12 +135,26 @@ function oa_subspaces_form_node_form_validate($form, &$form_state) {
  *   An array of NIDs.
  */
 function oa_subspaces_get_children_groups($group_type, $group_id) {
-  $children_groups = drupal_static(__FUNCTION__, array());
-  if (!isset($children_groups[$group_type . '_' . $group_id])) {
-    $children_groups[$group_type . '_' . $group_id] = array();
-    _oa_subspaces_get_children_groups($group_type, $group_id, $children_groups[$group_type . '_' . $group_id]);
+  $cid = oa_core_get_cache_id(OA_SUBSPACES_CACHE_CHILDREN, $group_id, FALSE, array($group_type));
+
+  $static_cache = &drupal_static(OA_SUBSPACES_CACHE_CHILDREN);
+  if (isset($static_cache[$cid])) {
+    return $static_cache[$cid];
   }
-  return $children_groups[$group_type . '_' . $group_id];
+
+  if ($cache = cache_get($cid)) {
+    $static_cache[$cid] = $cache->data;
+    return $cache->data;
+  }
+
+  $children_groups = array();
+  _oa_subspaces_get_children_groups($group_type, $group_id, $children_groups);
+
+  // Cache the list of children.
+  $static_cache[$cid] = $children_groups;
+  cache_set($cid, $children_groups);
+
+  return $children_groups;
 }
 
 /**
@@ -156,7 +175,7 @@ function _oa_subspaces_get_children_groups($group_type, $group_id, &$children_gr
 }
 
 /**
- * Return parents of a Space, regardless of the inheritence field.
+ * Return parents of a Space, regardless of the inheritance field.
  *
  * @param $group_type
  *   The group (entity) type.
@@ -167,11 +186,40 @@ function _oa_subspaces_get_children_groups($group_type, $group_id, &$children_gr
  *   An array of NIDs.
  */
 function oa_subspaces_get_parent_groups($group_type, $group_id) {
-  $result = og_subgroups_parents_load($group_type, $group_id, FALSE);
-  if (!empty($result[$group_type])) {
-    return array_values($result[$group_type]);
+  $cid = oa_core_get_cache_id(OA_SUBSPACES_CACHE_PARENTS, $group_id, FALSE, array($group_type));
+
+  $static_cache = &drupal_static(OA_SUBSPACES_CACHE_PARENTS);
+  if (isset($static_cache[$cid])) {
+    return $static_cache[$cid];
   }
-  return array();
+
+  if ($cache = cache_get($cid)) {
+    $static_cache[$cid] = $cache->data;
+    return $cache->data;
+  }
+
+  $result = array();
+  $parents = og_subgroups_parents_load($group_type, $group_id, FALSE);
+  if (!empty($parents[$group_type])) {
+    $result = array_values($parents[$group_type]);
+  }
+
+  // Cache the list of parents.
+  $static_cache[$cid] = $result;
+  cache_set($cid, $result);
+
+  return $result;
+}
+
+/**
+ * Implements hook_oa_clear_cache
+ */
+function oa_subspaces_oa_clear_cache($node = NULL, $uid = NULL, $include_archived = FALSE) {
+  $cid = oa_core_get_cache_id(OA_SUBSPACES_CACHE_CHILDREN, NULL, $include_archived);
+  oa_core_clear_cache(OA_SUBSPACES_CACHE_CHILDREN, $cid);
+
+  $cid = oa_core_get_cache_id(OA_SUBSPACES_CACHE_PARENTS, NULL, $include_archived);
+  oa_core_clear_cache(OA_SUBSPACES_CACHE_PARENTS, $cid);
 }
 
 /**
