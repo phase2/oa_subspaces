@@ -236,21 +236,45 @@ function oa_subspaces_form_views_exposed_form_alter(&$form, $form_state, $form_i
   }
 }
 
+/**
+ * Converts a flat list of spaces into a hierarchical space/subspace list
+ */
 function _oa_subspaces_rearrange_options(&$options) {
-  $parent_and_children = array();
   // Reorganize options for better usability.
   $nid_options = array_keys($options);
+  $indexed = array();
   foreach ($options as $nid => $title) {
-    if (!in_array($nid, $parent_and_children) && ($children = oa_subspaces_get_children_groups('node', $nid)) && array_intersect($children, $nid_options)) {
-      $parent_and_children[$nid] = $title;
-      foreach ($children as $child_nid) {
-        if (!empty($options[$child_nid])) {
-          $parent_and_children[$child_nid] = '-- ' . $options[$child_nid];
-        }
-      }
+    $parents = oa_core_get_parents($nid);
+    $indexed[$nid]['title'] = $title;
+    $indexed[$nid]['parent'] = (empty($parents) || !in_array($parents[0], $nid_options)) ? 0 : $parents[0];
+    $indexed[$nid]['children'] = array();
+  }
+
+  // convert flat list into hierarchy
+  $root = null;
+  foreach ($indexed as $id => $row) {
+    $indexed[$row['parent']]['children'][$id] =& $indexed[$id];
+    if (!$row['parent']) {
+      $root[$id] =& $indexed[$id];
     }
   }
-  $options = array_diff_key($options, $parent_and_children) + $parent_and_children;
+
+  // add the nested -- to titles to convert back to flat
+  $options = _oa_subspaces_build_options($root);
+}
+
+/**
+ * Helper to convert a hierarchical array back to a flat list with -- in titles
+ */
+function _oa_subspaces_build_options($list, $depth = 0) {
+  $result = array();
+  if (!empty($list)) {
+    foreach ($list as $nid => $sublist) {
+      $result[$nid] = str_repeat('--', $depth) . $sublist['title'];
+      $result += _oa_subspaces_build_options($sublist['children'], $depth+1);
+    }
+  }
+  return $result;
 }
 
 /**
