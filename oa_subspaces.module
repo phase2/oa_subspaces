@@ -251,16 +251,14 @@ function _oa_subspaces_rearrange_options(&$options) {
   }
 
   // convert flat list into hierarchy
-  $root = null;
   foreach ($indexed as $id => $row) {
     $indexed[$row['parent']]['children'][$id] =& $indexed[$id];
-    if (!$row['parent']) {
-      $root[$id] =& $indexed[$id];
-    }
   }
 
   // add the nested -- to titles to convert back to flat
-  $options = _oa_subspaces_build_options($root);
+  if (!empty($indexed[0]['children'])) {
+    $options = _oa_subspaces_build_options($indexed[0]['children']);
+  }
 }
 
 /**
