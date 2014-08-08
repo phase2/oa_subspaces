@@ -342,7 +342,7 @@ function _oa_subspaces_find_view_settings($view = NULL, $form_state = NULL) {
     // otherwise checkboxes (like og_subspaces_view_all) cannot be unchecked
     // because they don't return any result in $_GET from browser
     if (isset($_GET['og_group_ref_target_id'])) {
-      $return[$key] = $_GET[$key];
+      $return[$key] = isset($_GET[$key]) ? $_GET[$key] : NULL;
     }
     elseif (isset($_POST['exposed'][$key])) {
       $return[$key] = $_POST['exposed'][$key];
