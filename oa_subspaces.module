@@ -380,10 +380,6 @@ function _oa_subspaces_find_view_settings($view = NULL, $form_state = NULL) {
     $return['og_subspaces_view_all'] = FALSE;
     $return['og_subspaces_view_parent'] = FALSE;
   }
-  if ($return['oa_section_ref_target_id']) {
-    $return['og_subspaces_view_all'] = FALSE;
-    $return['og_subspaces_view_parent'] = FALSE;
-  }
 
   return $return;
 }
@@ -455,7 +451,60 @@ function oa_subspaces_views_query_alter(&$view, &$query) {
         }
       }
     }
+
+    if (!empty($view->exposed_input['oa_section_ref_target_id']) && is_numeric($view->exposed_input['oa_section_ref_target_id']) && !empty($view->filter['oa_section_ref_target_id']->options['exposed'])) {
+      if (!empty($extra_groups)) {
+        $columns = array(
+          'field_data_oa_section_ref.oa_section_ref_target_id',
+        );
+        $extra_sections = oa_subspaces_matching_sections($view->exposed_input['oa_section_ref_target_id'], $extra_groups);
+        foreach (array_keys($query->where) as $where_group) {
+          foreach ($query->where[$where_group]['conditions'] as $key => $condition) {
+            foreach ($columns as $column) {
+              if ($condition['field'] === $column ||
+                (is_string($condition['field']) && substr($condition['field'], -strlen($column)-2) === "__{$column}")) {
+                $query->where[$where_group]['conditions'][$key]['value'] = array_merge($query->where[$where_group]['conditions'][$key]['value'], $extra_sections);
+              }
+            }
+          }
+        }
+      }
+    }
   }
+}
+
+/**
+ * Return an array of section ids with the same Name as $section_id
+ * @param $entity entity or entity_id
+ */
+function oa_subspaces_matching_sections($entity, $groups = array()) {
+  $cache = &drupal_static(__FUNCTION__, array());
+  if (is_numeric($entity)) {
+    // Get the entity.
+    $entity = current(entity_load('node', array($entity)));
+  }
+  $id = $entity->nid;
+
+  if (isset($cache[$id])) {
+    // Return cached values.
+    return $cache[$id];
+  }
+  $cache[$id] = array();
+
+  $query = db_select('node', 'n');
+  $query->leftJoin('og_membership', 'f', "n.nid = f.etid");
+  if (!empty($groups)) {
+    $query->condition('f.gid', $groups, 'IN');
+  }
+  $query
+    ->fields('n', array('nid'))
+    ->condition('f.entity_type', 'node')
+    ->condition('n.status', 1)
+    ->condition('n.title', $entity->title)
+    ->addTag('node_access');
+
+  $cache[$id] = $query->execute()->fetchCol(0);
+  return $cache[$id];
 }
 
 /**
