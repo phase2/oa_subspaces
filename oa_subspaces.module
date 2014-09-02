@@ -393,8 +393,8 @@ function oa_subspaces_views_pre_view(&$view) {
   if (!empty($view->display_handler->default_display->options['filters']['og_group_ref_target_id']['exposed'])) {
     $settings = _oa_subspaces_find_view_settings($view);
 
-    $og_subspaces_view_all = $settings['og_subspaces_view_all'] && oa_subspaces_get_children_groups('node', $settings['og_group_ref_target_id']);
-    $og_subspaces_view_parent = $settings['og_subspaces_view_parent'] && oa_subspaces_get_parent_groups('node', $settings['og_group_ref_target_id']);
+    $og_subspaces_view_all = $settings['og_subspaces_view_all'] && $settings['og_group_ref_target_id'] && oa_subspaces_get_children_groups('node', $settings['og_group_ref_target_id']);
+    $og_subspaces_view_parent = $settings['og_subspaces_view_parent'] && $settings['og_group_ref_target_id'] && oa_subspaces_get_parent_groups('node', $settings['og_group_ref_target_id']);
 
     if ($og_subspaces_view_all || $og_subspaces_view_parent) {
       // If parent or children filtering is turned on (and there are any parents
