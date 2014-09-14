@@ -1,5 +1,5 @@
 name = Open Atrium Subgroup Intergration for Spaces
-description = Provides subgroup functionality for spaces
+description = Provides ability to add subspaces to spaces and inherit membership.
 core = 7.x
 package = Open Atrium
 version = 7.x-2.0
