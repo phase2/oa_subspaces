@@ -1,4 +1,4 @@
-name = Open Atrium Subgroup Intergration for Spaces
+name = Open Atrium Subspaces
 description = Provides ability to add subspaces to spaces and inherit membership.
 core = 7.x
 package = Open Atrium
@@ -20,6 +20,7 @@ apps[logo] = app/logo.png
 apps[author] = Phase2 Technology
 apps[author_url] = http://www.phase2technology.com/
 apps[server] = openatrium
+apps[package] = Core addons
 features[ctools][] = field_group:field_group:1
 features[ctools][] = strongarm:strongarm:1
 features[features_api][] = api:2
