@@ -423,12 +423,13 @@ function oa_subspaces_views_query_alter(&$view, &$query) {
     $settings = _oa_subspaces_find_view_settings($view);
 
     // Get all the parent or child groups if we are filtering for them.
+    $current_group = $view->exposed_input['og_group_ref_target_id'];
     $extra_groups = array();
     if ($settings['og_subspaces_view_all']) {
-      $extra_groups = array_merge($extra_groups, oa_subspaces_get_children_groups('node', $view->exposed_input['og_group_ref_target_id']));
+      $extra_groups = array_merge($extra_groups, oa_subspaces_get_children_groups('node', $current_group));
     }
     if ($settings['og_subspaces_view_parent']) {
-      $extra_groups = array_merge($extra_groups, oa_subspaces_get_parent_groups('node', $view->exposed_input['og_group_ref_target_id']));
+      $extra_groups = array_merge($extra_groups, oa_subspaces_get_parent_groups('node', $current_group));
     }
 
     // Add the extra groups to query, if there are any.
@@ -457,7 +458,7 @@ function oa_subspaces_views_query_alter(&$view, &$query) {
         $columns = array(
           'field_data_oa_section_ref.oa_section_ref_target_id',
         );
-        $extra_sections = oa_subspaces_matching_sections($view->exposed_input['oa_section_ref_target_id'], $extra_groups);
+        $extra_sections = oa_subspaces_matching_sections($view->exposed_input['oa_section_ref_target_id'], $extra_groups, array($current_group));
         foreach (array_keys($query->where) as $where_group) {
           foreach ($query->where[$where_group]['conditions'] as $key => $condition) {
             foreach ($columns as $column) {
@@ -477,7 +478,7 @@ function oa_subspaces_views_query_alter(&$view, &$query) {
  * Return an array of section ids with the same Name as $section_id
  * @param $entity entity or entity_id
  */
-function oa_subspaces_matching_sections($entity, $groups = array()) {
+function oa_subspaces_matching_sections($entity, $groups = array(), $omit_groups = array()) {
   $cache = &drupal_static(__FUNCTION__, array());
   if (is_numeric($entity)) {
     // Get the entity.
@@ -495,6 +496,9 @@ function oa_subspaces_matching_sections($entity, $groups = array()) {
   $query->leftJoin('og_membership', 'f', "n.nid = f.etid");
   if (!empty($groups)) {
     $query->condition('f.gid', $groups, 'IN');
+  }
+  if (!empty($omit_groups)) {
+    $query->condition('f.gid', $omit_groups, 'NOT IN');
   }
   $query
     ->fields('n', array('nid'))
