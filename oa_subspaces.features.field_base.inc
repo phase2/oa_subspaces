@@ -76,8 +76,8 @@ function oa_subspaces_field_default_field_bases() {
     'no_ui' => TRUE,
     'settings' => array(
       'allowed_values' => array(
-        0 => 'No - subgroups of this group won\'t inherit its users.',
-        1 => 'Yes - subgroups of this group will inherit its users.',
+        0 => 'No - this group won\'t inherit its parent\'s users.',
+        1 => 'Yes - this group will inherit its parent\'s users.',
       ),
       'allowed_values_function' => '',
     ),
